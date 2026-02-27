@@ -566,15 +566,16 @@ def is_sm120f_supported(device: torch.device) -> bool:
 
 def is_sm121a_supported(device: torch.device) -> bool:
     major, minor = get_compute_capability(device)
-    return major == 12 and minor == 1 and version_at_least(torch.version.cuda, "13.0")
+    return major == 12 and minor == 1 and version_at_least(torch.version.cuda, "12.8")
 
 
 def is_sm121f_supported(device: torch.device) -> bool:
     major, minor = get_compute_capability(device)
-    return major == 12 and minor >= 1 and version_at_least(torch.version.cuda, "13.0")
+    return major == 12 and minor >= 1 and version_at_least(torch.version.cuda, "12.9")
 
 
 def is_sm12x_supported(device: torch.device) -> bool:
+    """Check if the device supports any SM 12.x architecture."""
     major, minor = get_compute_capability(device)
     if major != 12:
         return False
