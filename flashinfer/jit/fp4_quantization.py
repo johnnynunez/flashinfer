@@ -24,7 +24,9 @@ from .core import (
     sm90a_nvcc_flags,
     sm110a_nvcc_flags,
     sm120a_nvcc_flags,
+    sm120f_nvcc_flags,
     sm121a_nvcc_flags,
+    sm121f_nvcc_flags,
 )
 from .cpp_ext import is_cuda_version_at_least
 
@@ -77,8 +79,18 @@ def gen_fp4_quantization_sm110_module() -> JitSpec:
 
 
 def gen_fp4_quantization_sm120_module() -> JitSpec:
-    return gen_fp4_quantization_module(sm120a_nvcc_flags, "120")
+    # Fat binary with both "a" (architecture-specific) and "f" (full-chip)
+    # gencode so the CUDA runtime can pick the right cubin at load time.
+    flags = sm120a_nvcc_flags + [
+        f for f in sm120f_nvcc_flags if f.startswith("-gencode")
+    ]
+    return gen_fp4_quantization_module(flags, "120")
 
 
 def gen_fp4_quantization_sm121_module() -> JitSpec:
-    return gen_fp4_quantization_module(sm121a_nvcc_flags, "121")
+    # Fat binary with both "a" (architecture-specific) and "f" (full-chip)
+    # gencode so the CUDA runtime can pick the right cubin at load time.
+    flags = sm121a_nvcc_flags + [
+        f for f in sm121f_nvcc_flags if f.startswith("-gencode")
+    ]
+    return gen_fp4_quantization_module(flags, "121")

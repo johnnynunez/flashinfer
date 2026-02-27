@@ -123,16 +123,31 @@ sm89_nvcc_flags = [
     "-gencode=arch=compute_89,code=sm_89",
     "-DFLASHINFER_ENABLE_FP8_E8M0",
 ]
+
+# NVCC architecture suffix semantics (CUDA 12.9+, see NVIDIA blog):
+#   "a" = architecture-specific: cubin runs ONLY on that exact compute capability.
+#   "f" = family-specific: cubin runs on all GPUs with the same
+#         major CC (equal or higher minor). E.g. sm_120f runs on SM120 AND SM121.
+#   no suffix = base features, forward-compatible as always.
+#
+# For SM10x+ with minor <= 1, both "a" and "f" variants exist:
+#   "a" targets architecture-specific chips
+#   "f" targets family-specific SKUs
+# SM103 only has "a" (no "f" variant).
+# SM90 only has "a" (no "f" variant; "f" was introduced with Blackwell).
+
 sm90a_nvcc_flags = [
-    "-gencode=arch=compute_90a,code=sm_90a",
+    "-gencode=arch=compute_90a,code=sm_90a",  # Hopper, "a" only
     "-DCUTE_SM90_EXTENDED_MMA_SHAPES_ENABLED",
 ] + common_nvcc_flags
-sm100a_nvcc_flags = ["-gencode=arch=compute_100a,code=sm_100a"] + common_nvcc_flags
-sm103a_nvcc_flags = ["-gencode=arch=compute_103a,code=sm_103a"] + common_nvcc_flags
-sm100f_nvcc_flags = ["-gencode=arch=compute_100f,code=sm_100f"] + common_nvcc_flags
-sm110a_nvcc_flags = ["-gencode=arch=compute_110a,code=sm_110a"] + common_nvcc_flags
-sm120a_nvcc_flags = ["-gencode=arch=compute_120a,code=sm_120a"] + common_nvcc_flags
-sm121a_nvcc_flags = ["-gencode=arch=compute_121a,code=sm_121a"] + common_nvcc_flags
+sm100a_nvcc_flags = ["-gencode=arch=compute_100a,code=sm_100a"] + common_nvcc_flags  # "a" architecture-specific
+sm100f_nvcc_flags = ["-gencode=arch=compute_100f,code=sm_100f"] + common_nvcc_flags  # "f" family-specific
+sm103a_nvcc_flags = ["-gencode=arch=compute_103a,code=sm_103a"] + common_nvcc_flags  # "a" architecture-specific
+sm110a_nvcc_flags = ["-gencode=arch=compute_110a,code=sm_110a"] + common_nvcc_flags  # "a" architecture-specific
+sm120a_nvcc_flags = ["-gencode=arch=compute_120a,code=sm_120a"] + common_nvcc_flags  # "a" architecture-specific
+sm120f_nvcc_flags = ["-gencode=arch=compute_120f,code=sm_120f"] + common_nvcc_flags  # "f" family-specific
+sm121a_nvcc_flags = ["-gencode=arch=compute_121a,code=sm_121a"] + common_nvcc_flags  # "a" architecture-specific
+sm121f_nvcc_flags = ["-gencode=arch=compute_121f,code=sm_121f"] + common_nvcc_flags  # "f" family-specific
 
 current_compilation_context = CompilationContext()
 

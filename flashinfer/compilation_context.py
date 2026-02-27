@@ -41,9 +41,31 @@ class CompilationContext:
             try:
                 for device in range(torch.cuda.device_count()):
                     major, minor = torch.cuda.get_device_capability(device)
-                    if major >= 9:
-                        minor = str(minor) + "a"
-                    self.TARGET_CUDA_ARCHS.add((int(major), str(minor)))
+                    if major >= 10:
+                        # Since Blackwell (SM10x) NVCC has two ISA extension
+                        # suffixes (see NVIDIA blog on CUDA 12.9 family-specific
+                        # architecture features):
+                        #
+                        #   "a" = architecture-specific (accelerator): cubin runs
+                        #         ONLY on that exact compute capability.
+                        #   "f" = family-specific (full-chip): cubin runs on all
+                        #         GPUs with the same major CC (>= minor).
+                        #
+                        # torch.cuda.get_device_capability() can't distinguish
+                        # a vs f, so we emit both gencode targets to produce a
+                        # fat binary that loads on either variant
+                        self.TARGET_CUDA_ARCHS.add((int(major), str(minor) + "a"))
+                        if minor <= 1:
+                            self.TARGET_CUDA_ARCHS.add(
+                                (int(major), str(minor) + "f")
+                            )
+                    elif major >= 9:
+                        # SM90 (Hopper): only "a" (architecture-specific); the
+                        # "f" family-specific suffix was not introduced until
+                        # Blackwell / CUDA 12.9.
+                        self.TARGET_CUDA_ARCHS.add((int(major), str(minor) + "a"))
+                    else:
+                        self.TARGET_CUDA_ARCHS.add((int(major), str(minor)))
             except Exception as e:
                 logger.warning(f"Failed to get device capability: {e}.")
 

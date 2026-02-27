@@ -27,7 +27,9 @@ from .jit import env as jit_env
 from .jit import (
     gen_jit_spec,
     sm121a_nvcc_flags,
+    sm121f_nvcc_flags,
     sm120a_nvcc_flags,
+    sm120f_nvcc_flags,
     sm110a_nvcc_flags,
     sm103a_nvcc_flags,
     sm100a_nvcc_flags,
@@ -96,11 +98,17 @@ def gen_fp4_quantization_sm110_module() -> JitSpec:
 
 
 def gen_fp4_quantization_sm120_module() -> JitSpec:
-    return gen_fp4_quantization_module(sm120a_nvcc_flags, "120")
+    flags = sm120a_nvcc_flags + [
+        f for f in sm120f_nvcc_flags if f.startswith("-gencode")
+    ]
+    return gen_fp4_quantization_module(flags, "120")
 
 
 def gen_fp4_quantization_sm121_module() -> JitSpec:
-    return gen_fp4_quantization_module(sm121a_nvcc_flags, "121")
+    flags = sm121a_nvcc_flags + [
+        f for f in sm121f_nvcc_flags if f.startswith("-gencode")
+    ]
+    return gen_fp4_quantization_module(flags, "121")
 
 
 def gen_fp4_quantization_module(nvcc_flags: List[str], device_arch: str) -> JitSpec:
