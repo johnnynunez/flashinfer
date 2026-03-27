@@ -53,6 +53,7 @@ from ..jit.gemm import gen_gemm_sm100_module_cutlass_fp4
 from ..jit.gemm import gen_gemm_sm103_module_cutlass_fp4
 from ..jit.gemm import gen_gemm_sm100_module_cutlass_fp8
 from ..jit.gemm import gen_gemm_sm100_module_cutlass_mxfp8
+from ..jit.gemm import gen_gemm_sm120_module_cutlass_mxfp8
 from ..jit.gemm import gen_gemm_sm100_module_cutlass_bf16
 from ..jit.gemm import gen_trtllm_gen_gemm_module
 from ..jit.gemm import gen_tgv_gemm_sm10x_module
@@ -3267,11 +3268,22 @@ def get_gemm_sm100_module_cutlass_mxfp8():
     )
 
 
+@functools.cache
+def get_gemm_sm120_module_cutlass_mxfp8():
+    """Get the SM120/121 MXFP8 GEMM module."""
+    module = gen_gemm_sm120_module_cutlass_mxfp8().build_and_load()
+    return _create_cutlass_mxfp8_gemm_module(
+        module, "flashinfer::cutlass_mxfp8_gemm", "cutlass_mxfp8_gemm"
+    )
+
+
 def get_cutlass_mxfp8_gemm_module(
     sm_major: int,
 ):
     if sm_major in [10, 11]:
         return get_gemm_sm100_module_cutlass_mxfp8()
+    elif sm_major in [12]:
+        return get_gemm_sm120_module_cutlass_mxfp8()
     else:
         raise ValueError(f"Unsupported SM major version: {sm_major}")
 
@@ -3394,7 +3406,7 @@ def _check_mm_mxfp8_problem_size(
     return True
 
 
-@supported_compute_capability([100, 103, 110])
+@supported_compute_capability([100, 103, 110, 120, 121])
 def _cutlass_gemm_mxfp8_requirement(
     a: torch.Tensor,
     b: torch.Tensor,
@@ -3918,6 +3930,9 @@ def mm_mxfp8(
           (``mxfp8_quantize(..., is_sf_swizzled_layout=True)``).
         - The ``"trtllm"`` requires b to be quantized with 128x4 swizzle layout and shuffled.
           a can be quantized with either 128x4 or 8x4 layout (controlled by `use_8x4_sf_layout`).
+        - On SM12x GPUs (RTX 5090/5080, RTX PRO 6000), the ``"cutlass"`` backend only supports
+          1D swizzled scales (``SfLayout.layout_128x4``). Passing 2D linear scales will raise
+          an error. Use ``mxfp8_quantize(..., sf_swizzle_layout=SfLayout.layout_128x4)``.
 
     Returns
     -------
